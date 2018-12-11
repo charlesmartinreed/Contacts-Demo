@@ -15,7 +15,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        
+        //the app window
+        window = UIWindow()
+        window?.makeKeyAndVisible()
+        
+        //root is the first screen
+        window?.rootViewController = UINavigationController(rootViewController: ViewController())
+        
         return true
     }
 
