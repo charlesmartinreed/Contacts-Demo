@@ -13,30 +13,16 @@ class ViewController: UITableViewController {
     //MARK:- Properties
     let cellId = "cellId"
     
-    let twoDimensionalArray = [
-        ["Charles", "David", "Latricia", "Edna", "Wendy"],
-        ["Carla", "Clarence", "Chris", "Cynthia"],
-        ["Darius", "Derrick", "Denise", "Devin", "Doris"],
-        ["Patrick", "Patricia", "Peter", "Pedro"]
+    var twoDimensionalArray = [
+        ExpandableNames(isExpanded: true, names: ["Charles", "David", "Latricia", "Edna", "Wendy"]),
+        ExpandableNames(isExpanded: true, names: ["Carla", "Clarence", "Chris", "Cynthia"]),
+        ExpandableNames(isExpanded: true, names: ["Darius", "Derrick", "Denise", "Devin", "Doris"]),
+        ExpandableNames(isExpanded: true, names: ["Patrick", "Patricia", "Peter", "Pedro"])
     ]
+    
+    var indexPathsToReload = [IndexPath]()
     
     var showIndexPaths = false //we'll flip this value to alternate between .left and .right reload animations
-    
-    /*
-    let salaryEmployees: [Person] = [
-        Person(name: "Charles Reed", position: "CEO", phoneNumber: "111-111-1111", isSalaried: true),
-        Person(name: "David Lowe", position: "CFO", phoneNumber: "111-111-2222", isSalaried: true),
-        Person(name: "Latricia Reed", position: "CTO", phoneNumber: "111-111-3333", isSalaried: true),
-//        Person(name: "Marvin Cotton", position: "Head of Recruiting", phoneNumber: "111-111-4444", isSalaried: true),
-//        Person(name: "Edna Adams", position: "Head of Human Resources", phoneNumber: "111-111-5555", isSalaried: true)
-        ]
-    
-    let hourlyEmployees: [Person] = [
-        Person(name: "Dana White", position: "Customer Service Agent", phoneNumber: "111-222-1111", isSalaried: false),
-        Person(name: "Jacob Stirling", position: "Custodial Lead", phoneNumber: "111-222-2222", isSalaried: false),
-        Person(name: "Maya Behong", position: "Front Desk Associate", phoneNumber: "111-222-3333", isSalaried: false)
-    ]
- */
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -50,18 +36,66 @@ class ViewController: UITableViewController {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellId)
     }
     
+    //MARK:- Section header customization
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        
+        //a button inside the header lets us execute code
+        let button = UIButton(type: .system) //highlights when tapped
+        button.setTitle("Close", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
+        button.backgroundColor = .yellow
+        
+        button.addTarget(self, action: #selector(handleHeaderExpandClose), for: .touchUpInside)
+        
+        //using tags to represent the section for each header, which we'll then use to determine which section to "collapse"
+        button.tag = section
+        
+        return button
+        
+    }
+    
     //MARK:- Helper methods
+    @objc private func handleHeaderExpandClose(button: UIButton) {
+        //create the illusion of collapsing and expanding by deleting (and reinserting) rows in the tableView
+        let section = button.tag
+        
+        //try to close the section by deleting the rows
+        var indexPaths = [IndexPath]()
+        
+        for row in twoDimensionalArray[section].names.indices {
+            let indexPath = IndexPath(row: row, section: section)
+            indexPaths.append(indexPath)
+        }
+        
+        let isExpanded = twoDimensionalArray[section].isExpanded
+        
+        //changing the button title depending on whether the operation is to close or open
+        button.setTitle(isExpanded ? "Open" : "Close", for: .normal)
+        
+        twoDimensionalArray[section].isExpanded = !isExpanded //use this value to figure out how many rows to return
+        
+        if isExpanded {
+            tableView.deleteRows(at: indexPaths, with: .fade)
+        } else {
+            tableView.insertRows(at: indexPaths, with: .fade)
+        }
+        
+    }
+    
     @objc private func handleShowIndexPath() {
         //build all indexPaths we want to reload
-        var indexPathsToReload = [IndexPath]()
-        
         //reload the entire top section using a nested for-in loop
-        for section in twoDimensionalArray.indices {
-            for row in twoDimensionalArray[section].indices {
-                let indexPaths = IndexPath(row: row, section: section)
-                indexPathsToReload.append(indexPaths)
+            for section in twoDimensionalArray.indices {
+                if twoDimensionalArray[section].isExpanded {
+                    for row in twoDimensionalArray[section].names.indices {
+                        let indexPaths = IndexPath(row: row, section: section)
+                        indexPathsToReload.append(indexPaths)
+                    }
+                } else {
+                    return
+                }
             }
-        }
         
         //animation choice logic
         showIndexPaths = !showIndexPaths
@@ -70,47 +104,41 @@ class ViewController: UITableViewController {
         tableView.reloadRows(at: indexPathsToReload, with: animationStyle)
     }
     
-    //MARK:- Section header customization
-    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        
-//        let salaryLabel = UILabel()
-//        let hourlyLabel = UILabel()
-//        let labels = [salaryLabel, hourlyLabel]
-//
-//        for label in labels {
-//            if label == labels.first {
-//                label.backgroundColor = .yellow
-//                label.text = "Salary"
-//            } else {
-//                label.backgroundColor = .green
-//                label.text = "Hourly"
-//            }
-//        }
-        let label = UILabel()
-        label.backgroundColor = .red
-        label.text = "Header"
-        
-        return label
+    @objc private func removeIndexPaths(section: Int) {
+       //placeholder
+      
     }
+  
     
     //MARK:- Table view methods
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 36
+    }
+    
     override func numberOfSections(in tableView: UITableView) -> Int {
         return twoDimensionalArray.count //we're using a 2D array, so the sections are the number of nested arrays
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return twoDimensionalArray[section].count
+        if !twoDimensionalArray[section].isExpanded { //if not expanded
+            return 0
+        }
+        
+        return twoDimensionalArray[section].names.count
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath)
         
-        let name = twoDimensionalArray[indexPath.section][indexPath.row]
+        let name = twoDimensionalArray[indexPath.section].names[indexPath.row]
+        let isExpanded = twoDimensionalArray[indexPath.section].isExpanded
         
         if showIndexPaths {
-        cell.textLabel?.text = "\(name) - Section: \(indexPath.section), Row: \(indexPath.row)"
+            if isExpanded {
+                cell.textLabel?.text = "\(name) - Section: \(indexPath.section), Row: \(indexPath.row)"
+            }
         } else {
             cell.textLabel?.text = name
         }
