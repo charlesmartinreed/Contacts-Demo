@@ -87,15 +87,16 @@ class ViewController: UITableViewController {
         //build all indexPaths we want to reload
         //reload the entire top section using a nested for-in loop
             for section in twoDimensionalArray.indices {
-                if twoDimensionalArray[section].isExpanded {
-                    for row in twoDimensionalArray[section].names.indices {
+                for row in twoDimensionalArray[section].names.indices {
+                    if twoDimensionalArray[section].isExpanded {
                         let indexPaths = IndexPath(row: row, section: section)
                         indexPathsToReload.append(indexPaths)
-                    }
-                } else {
-                    return
+                        print(twoDimensionalArray[section])
+                    } else {
+                        return
                 }
             }
+        }
         
         //animation choice logic
         showIndexPaths = !showIndexPaths
