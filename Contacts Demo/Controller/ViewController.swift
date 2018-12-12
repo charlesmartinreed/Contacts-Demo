@@ -13,11 +13,27 @@ class ViewController: UITableViewController {
     //MARK:- Properties
     let cellId = "cellId"
     
+    //MARK:- Linking function
+    //note: recommended to use custom delegation here instead of this sort of linking
+    func someMethodToCall(cell: UITableViewCell) {        
+        //figure out which name (row) we're clicking on
+        guard let indexPathTapped = tableView.indexPath(for: cell) else { return }
+        let contact = twoDimensionalArray[indexPathTapped.section].names[indexPathTapped.row]
+        
+        let hasFavorited = contact.hasFavorited
+    twoDimensionalArray[indexPathTapped.section].names[indexPathTapped.row].hasFavorited = !hasFavorited
+        
+        //reloading the row lets us visually change the favorite star's tint color
+        //tableView.reloadRows(at: [indexPathTapped], with: .fade)
+        
+        cell.accessoryView?.tintColor = hasFavorited ? .lightGray : .red
+    }
+    
     var twoDimensionalArray = [
-        ExpandableNames(isExpanded: true, names: ["Charles", "David", "Latricia", "Edna", "Wendy"]),
-        ExpandableNames(isExpanded: true, names: ["Carla", "Clarence", "Chris", "Cynthia"]),
-        ExpandableNames(isExpanded: true, names: ["Darius", "Derrick", "Denise", "Devin", "Doris"]),
-        ExpandableNames(isExpanded: true, names: ["Patrick", "Patricia", "Peter", "Pedro"])
+        ExpandableNames(isExpanded: true, names: ["Charles", "David", "Latricia", "Edna", "Wendy"].map { Contact(name: $0, hasFavorited: false)}),
+        ExpandableNames(isExpanded: true, names: ["Carla", "Clarence", "Chris", "Cynthia"].map { Contact(name: $0, hasFavorited: false)}),
+        ExpandableNames(isExpanded: true, names: ["Darius", "Derrick", "Denise", "Devin", "Doris"].map { Contact(name: $0, hasFavorited: false)}),
+        ExpandableNames(isExpanded: true, names: ["Patrick", "Patricia", "Peter", "Pedro"].map { Contact(name: $0, hasFavorited: false)}),
     ]
     
     var indexPathsToReload = [IndexPath]()
@@ -33,11 +49,15 @@ class ViewController: UITableViewController {
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Show indexPath", style: .plain, target: self, action: #selector(handleShowIndexPath))
         
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellId)
+        //register custom cell for 'favorites' feature
+        tableView.register(ContactCell.self, forCellReuseIdentifier: cellId)
+        
     }
     
     //MARK:- Section header customization
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        
+        
         
         //a button inside the header lets us execute code
         let button = UIButton(type: .system) //highlights when tapped
@@ -131,17 +151,22 @@ class ViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath)
+        //link the cell view to the view controller
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath) as! ContactCell
+        cell.link = self
         
-        let name = twoDimensionalArray[indexPath.section].names[indexPath.row]
+        let contact = twoDimensionalArray[indexPath.section].names[indexPath.row]
         let isExpanded = twoDimensionalArray[indexPath.section].isExpanded
+        
+        //favorite star tint color logic
+        cell.accessoryView?.tintColor = contact.hasFavorited ? UIColor.red : .lightGray
         
         if showIndexPaths {
             if isExpanded {
-                cell.textLabel?.text = "\(name) - Section: \(indexPath.section), Row: \(indexPath.row)"
+                cell.textLabel?.text = "\(contact.name) - Section: \(indexPath.section), Row: \(indexPath.row)"
             }
         } else {
-            cell.textLabel?.text = name
+            cell.textLabel?.text = contact.name
         }
         
         return cell
