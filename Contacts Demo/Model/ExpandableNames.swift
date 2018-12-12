@@ -10,10 +10,10 @@ import UIKit
 
 public struct ExpandableNames {
     var isExpanded: Bool
-    var names: [Contact]
+    var names: [FavoritableContact]
 }
 
-struct Contact {
+struct FavoritableContact {
     var name: String
     var hasFavorited: Bool
 }

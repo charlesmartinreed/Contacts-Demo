@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Contacts
 
 class ViewController: UITableViewController {
     
@@ -29,11 +30,11 @@ class ViewController: UITableViewController {
         cell.accessoryView?.tintColor = hasFavorited ? .lightGray : .red
     }
     
-    var twoDimensionalArray = [
-        ExpandableNames(isExpanded: true, names: ["Charles", "David", "Latricia", "Edna", "Wendy"].map { Contact(name: $0, hasFavorited: false)}),
-        ExpandableNames(isExpanded: true, names: ["Carla", "Clarence", "Chris", "Cynthia"].map { Contact(name: $0, hasFavorited: false)}),
-        ExpandableNames(isExpanded: true, names: ["Darius", "Derrick", "Denise", "Devin", "Doris"].map { Contact(name: $0, hasFavorited: false)}),
-        ExpandableNames(isExpanded: true, names: ["Patrick", "Patricia", "Peter", "Pedro"].map { Contact(name: $0, hasFavorited: false)}),
+    var twoDimensionalArray: [ExpandableNames] = [
+//        ExpandableNames(isExpanded: true, names: ["Charles", "David", "Latricia", "Edna", "Wendy"].map { FavoritableContact(name: $0, hasFavorited: false)}),
+//        ExpandableNames(isExpanded: true, names: ["Carla", "Clarence", "Chris", "Cynthia"].map { FavoritableContact(name: $0, hasFavorited: false)}),
+//        ExpandableNames(isExpanded: true, names: ["Darius", "Derrick", "Denise", "Devin", "Doris"].map { FavoritableContact(name: $0, hasFavorited: false)}),
+//        ExpandableNames(isExpanded: true, names: ["Patrick", "Patricia", "Peter", "Pedro"].map { FavoritableContact(name: $0, hasFavorited: false)}),
     ]
     
     var indexPathsToReload = [IndexPath]()
@@ -44,8 +45,11 @@ class ViewController: UITableViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
+        fetchContacts()
+        
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.title = "Contacts"
+        navigationController?.navigationBar.barTintColor = UIColor(displayP3Red: 255/255, green: 16/255, blue: 0/255, alpha: 1)
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Show indexPath", style: .plain, target: self, action: #selector(handleShowIndexPath))
         
@@ -64,7 +68,7 @@ class ViewController: UITableViewController {
         button.setTitle("Close", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
-        button.backgroundColor = .yellow
+        button.backgroundColor = UIColor(displayP3Red: 245/255, green: 120/255, blue: 48/255, alpha: 1)
         
         button.addTarget(self, action: #selector(handleHeaderExpandClose), for: .touchUpInside)
         
@@ -76,6 +80,48 @@ class ViewController: UITableViewController {
     }
     
     //MARK:- Helper methods
+    private func fetchContacts() {
+        //needs import Contacts to operate
+        let store = CNContactStore()
+        store.requestAccess(for: .contacts) { (granted, err) in
+            if let error = err {
+                print("Failed to request access", error.localizedDescription)
+                return
+            }
+            
+            if granted {
+                print("Access granted!")
+                
+                //constructing the request with keys, request and completion block
+                let keys = [CNContactGivenNameKey, CNContactFamilyNameKey, CNContactPhoneNumbersKey]
+                let request = CNContactFetchRequest(keysToFetch: keys as [CNKeyDescriptor])
+                do {
+                    
+                    var favoritableContacts = [FavoritableContact]()
+                    
+                    try store.enumerateContacts(with: request, usingBlock: { (contact, stopPointer) in
+                        //stop pointer terminates enumeration
+                        print(contact.givenName, contact.familyName, contact.phoneNumbers.first?.value.stringValue ?? "")
+                        
+                        favoritableContacts.append(FavoritableContact(name: "\(contact.givenName + " " + contact.familyName)", hasFavorited: false))
+                        
+                    })
+                    
+                    let names = ExpandableNames(isExpanded: true, names: favoritableContacts)
+                    self.twoDimensionalArray = [names]
+                    
+                } catch let err {
+                    print("Failed to enumerate contacts", err)
+                }
+                
+            } else {
+                print("Access denied...")
+            }
+        }
+        
+        
+    }
+    
     @objc private func handleHeaderExpandClose(button: UIButton) {
         //create the illusion of collapsing and expanding by deleting (and reinserting) rows in the tableView
         let section = button.tag
