@@ -20,6 +20,8 @@ class ViewController: UITableViewController {
         ["Patrick", "Patricia", "Peter", "Pedro"]
     ]
     
+    var showIndexPaths = false //we'll flip this value to alternate between .left and .right reload animations
+    
     /*
     let salaryEmployees: [Person] = [
         Person(name: "Charles Reed", position: "CEO", phoneNumber: "111-111-1111", isSalaried: true),
@@ -43,7 +45,29 @@ class ViewController: UITableViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.title = "Contacts"
         
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Show indexPath", style: .plain, target: self, action: #selector(handleShowIndexPath))
+        
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellId)
+    }
+    
+    //MARK:- Helper methods
+    @objc private func handleShowIndexPath() {
+        //build all indexPaths we want to reload
+        var indexPathsToReload = [IndexPath]()
+        
+        //reload the entire top section using a nested for-in loop
+        for section in twoDimensionalArray.indices {
+            for row in twoDimensionalArray[section].indices {
+                let indexPaths = IndexPath(row: row, section: section)
+                indexPathsToReload.append(indexPaths)
+            }
+        }
+        
+        //animation choice logic
+        showIndexPaths = !showIndexPaths
+        
+        let animationStyle = showIndexPaths ? UITableView.RowAnimation.right : .left
+        tableView.reloadRows(at: indexPathsToReload, with: animationStyle)
     }
     
     //MARK:- Section header customization
@@ -85,7 +109,11 @@ class ViewController: UITableViewController {
         
         let name = twoDimensionalArray[indexPath.section][indexPath.row]
         
+        if showIndexPaths {
         cell.textLabel?.text = "\(name) - Section: \(indexPath.section), Row: \(indexPath.row)"
+        } else {
+            cell.textLabel?.text = name
+        }
         
         return cell
     }
