@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Contacts
 
 public struct ExpandableNames {
     var isExpanded: Bool
@@ -14,6 +15,6 @@ public struct ExpandableNames {
 }
 
 struct FavoritableContact {
-    var name: String
+    let contact: CNContact
     var hasFavorited: Bool
 }

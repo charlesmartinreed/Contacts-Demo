@@ -30,12 +30,11 @@ class ViewController: UITableViewController {
         cell.accessoryView?.tintColor = hasFavorited ? .lightGray : .red
     }
     
-    var twoDimensionalArray: [ExpandableNames] = [
+    var twoDimensionalArray = [ExpandableNames]()
 //        ExpandableNames(isExpanded: true, names: ["Charles", "David", "Latricia", "Edna", "Wendy"].map { FavoritableContact(name: $0, hasFavorited: false)}),
 //        ExpandableNames(isExpanded: true, names: ["Carla", "Clarence", "Chris", "Cynthia"].map { FavoritableContact(name: $0, hasFavorited: false)}),
 //        ExpandableNames(isExpanded: true, names: ["Darius", "Derrick", "Denise", "Devin", "Doris"].map { FavoritableContact(name: $0, hasFavorited: false)}),
 //        ExpandableNames(isExpanded: true, names: ["Patrick", "Patricia", "Peter", "Pedro"].map { FavoritableContact(name: $0, hasFavorited: false)}),
-    ]
     
     var indexPathsToReload = [IndexPath]()
     
@@ -101,9 +100,10 @@ class ViewController: UITableViewController {
                     
                     try store.enumerateContacts(with: request, usingBlock: { (contact, stopPointer) in
                         //stop pointer terminates enumeration
-                        print(contact.givenName, contact.familyName, contact.phoneNumbers.first?.value.stringValue ?? "")
                         
-                        favoritableContacts.append(FavoritableContact(name: "\(contact.givenName + " " + contact.familyName)", hasFavorited: false))
+                        favoritableContacts.append(FavoritableContact(contact: contact, hasFavorited: false))
+                        
+//                        favoritableContacts.append(FavoritableContact(name: "\(contact.givenName + " " + contact.familyName)", phoneNumber: contact.phoneNumbers.first?.value.stringValue ?? "", hasFavorited: false))
                         
                     })
                     
@@ -198,21 +198,28 @@ class ViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         //link the cell view to the view controller
-        let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath) as! ContactCell
+        //let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath) as! ContactCell
+        
+        //by default, cell won't have detailTextLabel style. Here's the fix for that.
+        let cell = ContactCell(style: .subtitle, reuseIdentifier: cellId)
+        
         cell.link = self
         
-        let contact = twoDimensionalArray[indexPath.section].names[indexPath.row]
+        let favoritableContact = twoDimensionalArray[indexPath.section].names[indexPath.row]
         let isExpanded = twoDimensionalArray[indexPath.section].isExpanded
         
         //favorite star tint color logic
-        cell.accessoryView?.tintColor = contact.hasFavorited ? UIColor.red : .lightGray
+        cell.accessoryView?.tintColor = favoritableContact.hasFavorited ? UIColor.red : .lightGray
         
         if showIndexPaths {
             if isExpanded {
-                cell.textLabel?.text = "\(contact.name) - Section: \(indexPath.section), Row: \(indexPath.row)"
+                cell.textLabel?.text = "\(favoritableContact.contact.givenName) - Section: \(indexPath.section), Row: \(indexPath.row)"
             }
         } else {
-            cell.textLabel?.text = contact.name
+            cell.textLabel?.text = favoritableContact.contact.givenName + " " + favoritableContact.contact.familyName
+            cell.textLabel?.font = UIFont.boldSystemFont(ofSize: 16)
+            
+            cell.detailTextLabel?.text = favoritableContact.contact.phoneNumbers.first?.value.stringValue
         }
         
         return cell
